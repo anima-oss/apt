@@ -1,0 +1,17 @@
+{
+  "rootDir": ".aptly",
+  "architectures": ["amd64", "all"],
+  "dependencyFollowSuggests": false,
+  "dependencyFollowRecommends": false,
+  "dependencyFollowAllVariants": false,
+  "dependencyFollowSource": false,
+  "gpgDisableSign": false,
+  "gpgDisableVerify": false,
+  "downloadConcurrency": 4,
+  "FileSystemPublishEndpoints": {
+    "public": {
+      "rootDir": "./public",
+      "linkMethod": "copy"
+    }
+  }
+}

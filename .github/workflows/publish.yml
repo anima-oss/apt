@@ -1,0 +1,145 @@
+name: Publish AnimaOS APT Repository
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: anima-apt-pages
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-24.04
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          sudo apt-get update
+          sudo apt-get install -y \
+            ca-certificates curl gnupg dpkg-dev python3
+
+          sudo install -d -m 0755 /etc/apt/keyrings
+
+          curl -fsSL https://www.aptly.info/pubkey.txt \
+            | sudo gpg --dearmor \
+                -o /etc/apt/keyrings/aptly.gpg
+
+          echo "deb [signed-by=/etc/apt/keyrings/aptly.gpg] https://repo.aptly.info/release noble main" \
+            | sudo tee /etc/apt/sources.list.d/aptly.list
+
+          sudo apt-get update
+          sudo apt-get install -y aptly
+
+          aptly version
+
+      - name: Run infrastructure tests
+        run: |
+          chmod +x scripts/*.sh tests/*.sh
+          ./tests/run.sh
+
+      - name: Import GPG signing key
+        env:
+          APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+          APT_GPG_KEY_ID: ${{ secrets.APT_GPG_KEY_ID }}
+        run: |
+          set -Eeuo pipefail
+
+          test -n "$APT_GPG_PRIVATE_KEY"
+          test -n "$APT_GPG_KEY_ID"
+
+          printf '%s' "$APT_GPG_PRIVATE_KEY" \
+            | gpg --batch --import
+
+          gpg --batch --list-secret-keys "$APT_GPG_KEY_ID"
+
+      - name: Download Debian packages from releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+
+          mkdir -p packages
+
+          gh release list \
+            --repo "$GITHUB_REPOSITORY" \
+            --limit 1000 \
+            --json tagName \
+            --jq '.[].tagName' > /tmp/release-tags
+
+          while IFS= read -r tag; do
+            [[ -n "$tag" ]] || continue
+
+            mkdir -p "packages/$tag"
+
+            gh release download "$tag" \
+              --repo "$GITHUB_REPOSITORY" \
+              --pattern '*.deb' \
+              --dir "packages/$tag" || true
+          done < /tmp/release-tags
+
+          if ! find packages -type f -name '*.deb' -print -quit | grep -q .; then
+            echo "ERROR: No .deb files found in releases."
+            exit 1
+          fi
+
+      - name: Generate repository and export public key
+        env:
+          APT_GPG_KEY_ID: ${{ secrets.APT_GPG_KEY_ID }}
+          APT_CODENAME: trixie
+          APT_COMPONENT: main
+          APT_ARCHITECTURE: amd64
+        run: |
+          set -Eeuo pipefail
+
+          mkdir -p public
+
+          gpg --batch --export "$APT_GPG_KEY_ID" \
+            > public/anima-archive-keyring.gpg
+
+          test -s public/anima-archive-keyring.gpg
+
+          ./scripts/publish.sh \
+            "$GITHUB_WORKSPACE/packages" \
+            "$GITHUB_WORKSPACE/public"
+
+      - name: Verify signed repository
+        run: |
+          set -Eeuo pipefail
+
+          test -s public/dists/trixie/InRelease
+          test -s public/dists/trixie/main/binary-amd64/Packages
+
+          gpgv \
+            --keyring public/anima-archive-keyring.gpg \
+            public/dists/trixie/InRelease
+
+          echo "APT Release signature verified."
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

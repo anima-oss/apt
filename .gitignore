@@ -1,0 +1,29 @@
+# Local package staging
+packages/*
+!packages/.gitkeep
+
+# Aptly local database and storage
+.aptly/
+aptly.db
+
+# Generated repository
+public/
+repository/
+
+# GPG private material
+*.asc
+*.secret
+*.private
+private-key*
+secring.gpg
+*.gpg~
+
+# Temporary files
+*.tmp
+*.log
+*.bak
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
