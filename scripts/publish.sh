@@ -107,6 +107,6 @@ echo "Publishing signed snapshot..."
     -architectures="$ARCHITECTURE,all" \
     -acquire-by-hash \
     "$SNAPSHOT" \
-    filesystem:public
+    filesystem:public:.
 
 echo "APT repository generated: $PUBLIC_DIR"
