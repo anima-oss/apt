@@ -13,6 +13,14 @@ REPO_NAME="${APT_REPO_NAME:-anima-oss}"
 SNAPSHOT="${APT_SNAPSHOT_NAME:-anima-oss-$(date -u +%Y%m%d%H%M%S)-$$}"
 
 CONFIG="$ROOT/config/aptly.conf"
+if [[ ! -f "$CONFIG" ]]; then
+    CONFIG="$ROOT/config/aptly.conf.example"
+fi
+
+[[ -f "$CONFIG" ]] || {
+    echo "ERROR: Aptly configuration not found." >&2
+    exit 1
+}
 APTLY_ROOT="${APTLY_ROOT_DIR:-$ROOT/.aptly}"
 
 die() {
