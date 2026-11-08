@@ -33,7 +33,7 @@ jobs:
 
           sudo apt-get update
           sudo apt-get install -y \
-            ca-certificates curl gnupg dpkg-dev python3
+            ca-certificates curl gnupg dpkg-dev python3 python3-yaml
 
           sudo install -d -m 0755 /etc/apt/keyrings
 
@@ -69,35 +69,12 @@ jobs:
 
           gpg --batch --list-secret-keys "$APT_GPG_KEY_ID"
 
-      - name: Download Debian packages from releases
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Download Debian packages from catalog
         run: |
           set -Eeuo pipefail
 
-          mkdir -p packages
-
-          gh release list \
-            --repo "$GITHUB_REPOSITORY" \
-            --limit 1000 \
-            --json tagName \
-            --jq '.[].tagName' > /tmp/release-tags
-
-          while IFS= read -r tag; do
-            [[ -n "$tag" ]] || continue
-
-            mkdir -p "packages/$tag"
-
-            gh release download "$tag" \
-              --repo "$GITHUB_REPOSITORY" \
-              --pattern '*.deb' \
-              --dir "packages/$tag" || true
-          done < /tmp/release-tags
-
-          if ! find packages -type f -name '*.deb' -print -quit | grep -q .; then
-            echo "ERROR: No .deb files found in releases."
-            exit 1
-          fi
+          python3 scripts/download-packages.py \
+            "$GITHUB_WORKSPACE/packages"
 
       - name: Generate repository and export public key
         env:

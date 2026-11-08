@@ -1,0 +1,18 @@
+schema_version: 1
+
+packages:
+  - package: anima-control
+    repository: anima-oss/apt
+    tag: v0.1.0
+    asset: anima-control_0.1.0_amd64.deb
+    version: "0.1.0"
+    architecture: amd64
+    enabled: true
+
+  - package: anima-booter
+    repository: marrionesa/animabooter
+    tag: v0.1.0
+    asset: animabooter-linux_AnimaBooter_0.1.0_amd64.deb
+    version: "0.1.0"
+    architecture: amd64
+    enabled: true
