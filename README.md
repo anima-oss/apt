@@ -1,4 +1,4 @@
-<p align="center">
+ <p align="center">
   <img src="docs/branding/anima-banner.png" alt="ANIMA — asistente personal local" width="100%">
 </p>
 
@@ -66,29 +66,31 @@ sudo apt update
 
 ### 4. Install applications
 
-Install either application:
+Install individual applications:
 
 ```bash
 sudo apt install anima-control
 sudo apt install anima-booter
+sudo apt install anima-system-suite
 ```
 
-Or install both:
+Or install all applications:
 
 ```bash
-sudo apt install anima-control anima-booter
+sudo apt install anima-control anima-booter anima-system-suite
 ```
 
 Once the repository is configured, APT handles package downloads, installation and subsequent upgrades through the standard package manager.
 
 ## Available packages
 
-The repository currently publishes **2 packages**:
+The repository currently publishes **3 packages**:
 
 | Debian package | Application | Version | Architecture | Description |
 |---|---|---:|---|---|
 | `anima-control` | ANIMA Control Center | `0.1.0` | `amd64` | Management tools for the AnimaOS desktop environment |
 | `anima-booter` | AnimaBooter | `0.1.0` | `amd64` | Cross-platform USB imaging utility with verification and destructive-safety features |
+| `anima-system-suite` | ANIMA System Suite | `1.0.0` | `amd64` | Linux system performance monitoring, hardware diagnostics, cooling management and OS optimization |
 
 ### `anima-control`
 
@@ -127,6 +129,53 @@ Install:
 sudo apt install anima-booter
 ```
 
+### `anima-system-suite` — ANIMA System Suite
+
+ANIMA System Suite is a native Linux desktop application built with **Tauri v2, Rust, React and TypeScript**. It provides comprehensive system performance monitoring, hardware diagnostics, driver auditing, BIOS and firmware inspection, cooling management and operating system optimization.
+
+Its feature set includes:
+
+- Real-time system health dashboard.
+- CPU and RAM monitoring.
+- GPU and kernel driver diagnostics.
+- BIOS and firmware auditing.
+- Secure Boot and boot-time information.
+- Hardware temperature monitoring through Linux hwmon interfaces.
+- AIO pump and fan monitoring.
+- PWM fan control and automatic fan curves.
+- Chassis airflow monitoring and balancing.
+- OS configuration auditing and optimization.
+- One-Click Fix operations with Polkit authorization.
+- System temperature alerts and background monitoring.
+
+**Technical information:**
+
+| Property | Value |
+|---|---|
+| Package | `anima-system-suite` |
+| Version | `1.0.0` |
+| Architecture | `amd64` |
+| Package format | Debian `.deb` |
+| Framework | Tauri v2 |
+| Backend | Rust |
+| Frontend | React + TypeScript |
+| Distribution | ANIMA OSS APT |
+
+The application uses real Linux system interfaces and hardware sensors, including `/sys/class/hwmon`, `/sys/class/dmi`, `/proc` and `/sys/firmware/efi`.
+
+When hardware information is unavailable, the application reports unavailable values or explicitly identified estimates rather than inventing sensor readings.
+
+Official project and distribution release:
+
+- [ANIMA System Suite source repository](https://github.com/marrionesa/anima-system-suite)
+- [ANIMA System Suite v1.0.0 — Public APT Release](https://github.com/anima-oss/apt/releases/tag/v0.1.0)
+
+Install:
+
+```bash
+sudo apt install anima-system-suite
+```
+
 ## How package publication works
 
 The package catalog in [`config/packages.yml`](config/packages.yml) is the source of truth for the packages included in each publication. Each enabled entry identifies:
@@ -152,7 +201,7 @@ The workflow is triggered by either:
 - **Manual dispatch** (`workflow_dispatch`) from GitHub Actions.
 - **A published Release in `anima-oss/apt`** (`release: published`).
 
-A Release published in an upstream repository such as `marrionesa/animabooter` does not, by itself, trigger this repository's workflow. After updating an upstream package entry in `config/packages.yml`, run **Publish AnimaOS APT Repository** manually from the Actions tab.
+A Release published in an upstream repository does not, by itself, trigger this repository's workflow. After updating an upstream package entry in `config/packages.yml`, run **Publish AnimaOS APT Repository** manually from the Actions tab.
 
 ### Adding or updating a package
 
@@ -164,18 +213,19 @@ A Release published in an upstream repository such as `marrionesa/animabooter` d
    ./tests/run.sh
    ```
 
-4. Commit and push the catalog or workflow changes to `main`.
+4. Submit the catalog or workflow changes through a Pull Request and merge them into `main`.
 5. In GitHub, open **Actions → Publish AnimaOS APT Repository → Run workflow**.
 6. Confirm that the run succeeds and that GitHub Pages deploys the generated repository.
 7. Verify publication from a client:
 
    ```bash
    sudo apt update
+   apt-cache policy anima-control
    apt-cache policy anima-booter
-   apt-cache madison anima-booter
+   apt-cache policy anima-system-suite
    ```
 
-A new Release in `anima-oss/apt` is not required when adding a package whose `.deb` is hosted in another repository. The catalog and the publication workflow control package inclusion.
+A new Release in `anima-oss/apt` is not required when adding a package whose `.deb` is hosted in an existing Release. The catalog and publication workflow control package inclusion.
 
 ## Local tests
 
@@ -201,7 +251,9 @@ The tests check shell and Python syntax, the package catalog, Aptly configuratio
 - **APT Repository:** <https://anima-oss.github.io/apt/>
 - **GitHub Repository:** <https://github.com/anima-oss/apt>
 - **GitHub Releases:** <https://github.com/anima-oss/apt/releases>
+- **ANIMA Control:** <https://github.com/anima-oss>
 - **AnimaBooter:** <https://github.com/marrionesa/animabooter>
+- **ANIMA System Suite:** <https://github.com/marrionesa/anima-system-suite>
 - **Client Setup:** [docs/client-setup.md](docs/client-setup.md)
 - **Package Maintenance:** [docs/package-maintenance.md](docs/package-maintenance.md)
 
