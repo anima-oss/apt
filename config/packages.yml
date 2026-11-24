@@ -16,3 +16,11 @@ packages:
     version: "0.1.0"
     architecture: amd64
     enabled: true
+
+  - package: anima-system-suite
+    repository: anima-oss/apt
+    tag: v0.1.0
+    asset: ANIMA-System-Suite-1.0.0-amd64.deb
+    version: "1.0.0"
+    architecture: amd64
+    enabled: true
